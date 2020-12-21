@@ -22,4 +22,65 @@ module.exports = {
             next(error);
         }
     },
+
+    list: async(req, res, next) => {
+        try {
+            const lista = await models.Usuario.findAll();
+            res.status(200).json(lista);
+        } catch (error) {
+            res.status(500).send({ message: 'Imposible conectar, intente mas tarde' });
+            next(error);
+        }
+    },
+
+    add: async(req, res, next) => {
+        try {
+            const nuevoUsuario = await models.Usuario.findOne({ where: { email: req.body.email } });
+            if(!nuevoUsuario) {
+                req.body.password = await bcrypt.hash(req.body.password, 10);
+                const user = await models.Usuario.create(req.body);
+                res.status(200).send({ status: 'Usuario creado correctamente', user: user });
+            } else {
+                res.status(405).json({ error: 'Usuario ya registrado' });
+            }
+        } catch (error) {
+            res.status(500).send({ message: 'Imposible conectar, intente mas tarde' });
+            next(error);
+        }
+    },
+
+    update: async(req, res, next) => {
+        try {
+            const passwordPast = req.body.password;
+            const usuarioRegistrado = await models.Usuario.findOne({ where: { id: req.body.id } });
+            if(passwordPast != usuarioRegistrado.password) {
+                req.body.password = await bcrypt.hash(req.body.password, 10);
+            }
+            const usuarioUpdate = await models.Usuario.update({ rol: req.body.rol, nombre: req.body.nombre, email: req.body.email, password: req.body.password }, { where: { id: req.body.id } });
+            res.status(200).json(usuarioUpdate);
+        } catch (error) {
+            res.status(500).send({ message: 'Imposible conectar, intente mas tarde' });
+            next(error);
+        }
+    },
+
+    activate: async(req, res, next) => {
+        try {
+            const usuarioActivate = await models.Usuario.update({ estado: 1 }, { where: { id: req.body.id } });
+            res.status(200).json(usuarioActivate);
+        } catch (error) {
+            res.status(500).send({ message: 'Imposible conectar, intente mas tarde' });
+            next(error);  
+        }
+    },
+
+    deactivate: async(req, res, next) => {
+        try {
+            const usuarioDeactivate = await models.Usuario.update({ estado: 0 }, { where: { id: req.body.id } });
+            res.status(200).json(usuarioDeactivate);
+        } catch (error) {
+            res.status(500).send({ message: 'Imposible conectar, intente mas tarde' });
+            next(error);  
+        }
+    },
 }
